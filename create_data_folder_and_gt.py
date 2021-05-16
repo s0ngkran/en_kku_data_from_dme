@@ -83,8 +83,8 @@ def create_curriculum_gt(keypoint):
 json_data = []
 
 # write json_data     ############################# config
-# json_name = 'training'
-json_name = 'validation'
+json_name = 'training'
+# json_name = 'validation'
 # json_name = 'test'
 
 augment_replica = 4
@@ -98,14 +98,14 @@ for cnt, dat in enumerate(data):
     print(cnt, len(data))
     user = dat['user']
     ############################################################# config
-    # if user in ['DMW', 'Jammy']:   # for training_set
-    #     continue
+    if user in ['DMW', 'Jammy']:   # for training_set
+        continue
 
     # if user not in ['DMW']: # for testing_set
     #     continue
 
-    if user not in ['Jammy']: # for validation_set
-        continue
+    # if user not in ['Jammy']: # for validation_set
+    #     continue
     #########################################################################
 
     ori_keypoint = dat['keypoint']

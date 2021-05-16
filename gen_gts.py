@@ -87,8 +87,8 @@ def gen_12_keypoint_with_covered_point(keypoint, width, height, sigma=0.4):
     gts = F.interpolate(gts.unsqueeze(0), size=(45,45), mode='bicubic').squeeze(0)
 
     # gen gts mask
-    gts_mask = torch.BoolTensor(gts.shape)
-    gts_mask = False
-    gts_mask[gts > 0.01] = True
+    gts_mask = torch.zeros(gts.shape)
+    gts_mask[gts > 0.01] = 1
+    gts_mask = gts_mask.type(torch.bool)
 
     return gts, gts_mask, covered_point

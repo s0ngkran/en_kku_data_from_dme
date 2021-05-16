@@ -128,7 +128,7 @@ def gt_vec_with_covered(width, height, keypoint, size=20, link=link12from25):
 
     # gtl_mask
     gtl_mask = torch.zeros(ans.shape)
-    
+
     for index, (partA, partB) in enumerate(link):
         vec = point[partB]-point[partA]
         length = np.sqrt(vec[0]**2+vec[1]**2)
@@ -150,8 +150,8 @@ def gt_vec_with_covered(width, height, keypoint, size=20, link=link12from25):
         ans[ index*2] = torch.tensor(u_vec[0] * mask).reshape(width, height)  #x
         ans[ index*2+1] = torch.tensor(u_vec[1] * mask).reshape(width, height) #y
 
-        gtl_mask[index*2][mask] = 1 # use float instead of bool for interpolate in the next process
-        gtl_mask[index*2+1][mask] = 1
+        gtl_mask[index*2] = torch.tensor(mask).reshape(width, height) # use float instead of bool for interpolate in the next process
+        gtl_mask[index*2+1] = torch.tensor(mask).reshape(width, height)
 
         # manage special case of covered link
         # azi 0 and azi 90
@@ -179,7 +179,7 @@ def gen_12_keypoint_with_covered_link(keypoint, width, height, sigma=0.4):
     gtl = F.interpolate(gtl.unsqueeze(0), size=(45,45), mode='nearest').squeeze(0)
 
     # manage gtl_mask
-    gtl_mask = F.interpolate(gtl.unsqueeze(0), size=(45,45), mode='bicubic').squeeze(0)
+    gtl_mask = F.interpolate(gtl_mask.unsqueeze(0), size=(45,45), mode='bicubic').squeeze(0)
     gtl_mask[gtl_mask > 0.5] = 1
     gtl_mask[gtl_mask <= 0.5] = 0
     gtl_mask = gtl_mask.type(torch.BoolTensor)
