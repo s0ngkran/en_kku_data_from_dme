@@ -4,9 +4,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def get_lastest_index(epoch):
+    epoch_ = epoch[:-1]
+    shift = epoch[1:]
+
+    diff = epoch_ - shift
+    try:
+        index = np.where(diff>0)[0][-1] + 1
+    except:
+        index = 0
+    return index
+
+
 def read_loss(filename):
     with open(filename, 'r') as f:
         data = f.readlines()
+    # splite data
     epoch, iteration, loss = [], [], []
     for dat in data:
         epoch_, iteration_, loss_ = dat.split(',')
@@ -17,8 +30,15 @@ def read_loss(filename):
         epoch.append(epoch_)
         iteration.append(iteration_)
         loss.append(loss_)
+    
+    # convert to array
     epoch = np.array(epoch)
     loss = np.array(loss)
+
+    # select lastest update
+    index = get_lastest_index(epoch)
+    epoch = epoch[index:]
+    loss = loss[index:]
     return epoch, loss
 
 
@@ -61,10 +81,10 @@ def read_and_plot(filename, color):
 
 
 if __name__ == '__main__':
-    
     tr = input('training num (e.g. 1, 2, 3, ...) = ')
-    read_and_plot('train%s.pyw.loss' % (str(tr).zfill(2)), 'r.')
-    read_and_plot('train%s.pyw.loss_va' % (str(tr).zfill(2)), 'b-')
-    read_and_plot('train%s.pyw.gts_loss' % (str(tr).zfill(2)), 'g.')
-    read_and_plot('train%s.pyw.gtl_loss' % (str(tr).zfill(2)), 'yx')
+    save_folder = 'log/'
+    read_and_plot(save_folder + 'train%s.py.loss' % (str(tr).zfill(2)), 'r.')
+    read_and_plot(save_folder + 'train%s.py.loss_va' % (str(tr).zfill(2)), 'b-')
+    read_and_plot(save_folder + 'train%s.py.gts_loss' % (str(tr).zfill(2)), 'g.')
+    read_and_plot(save_folder + 'train%s.py.gtl_loss' % (str(tr).zfill(2)), 'yx')
     plt.show()

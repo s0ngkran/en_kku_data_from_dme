@@ -6,7 +6,6 @@ sys.path.append('..')
 from util.Logger import Logger
 logger = Logger('log_loss')
 def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, covered):
-    assert len(out) == 4, 'check your output stage' # L1, L2, S1, S2
     batch = gtl.shape[0]
     width = gtl.shape[2]
     height = gtl.shape[3]
@@ -14,8 +13,9 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
     loss = 0
     loss_gts = 0
     loss_gtl = 0
-    pred_s = out[0].cpu()
-    pred_l = out[1].cpu()
+
+    pred_s = torch.stack(out[0]).transpose(0,1).cpu()
+    pred_l = torch.stack(out[1]).transpose(0,1).cpu()
     
     ############################  gts  ##########################################
     thres_zero = 4/96 *0.6
@@ -24,6 +24,9 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
     
     # weight[gt_s < thres] *= thres_zero
     # weight[gt_s >= thres] *= thres_non
+
+    # print('--', pred_s.shape, gts.shape)
+    # 1/0
     loss_ = ((pred_s - gts)**2)
     loss_[gts_mask==False] *= thres_zero
     loss_[gts_mask==True] *= thres_non
