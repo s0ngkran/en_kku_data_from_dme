@@ -85,8 +85,7 @@ json_data = []
 # write json_data     ############################# config
 json_name = 'training'
 # json_name = 'validation'
-# json_name = 'test'
-
+# json_name = 'testing'
 augment_replica = 4
 
 # read
@@ -97,16 +96,15 @@ if not os.path.exists(save_folder):
 for cnt, dat in enumerate(data):
     print(cnt, len(data))
     user = dat['user']
-    ############################################################# config
-    if user in ['DMW', 'Jammy']:   # for training_set
-        continue
-
-    # if user not in ['DMW']: # for testing_set
-    #     continue
-
-    # if user not in ['Jammy']: # for validation_set
-    #     continue
-    #########################################################################
+    if json_name == 'training':
+        if user in ['DMW', 'Jammy']:   # for training_set
+            continue
+    elif json_name == 'testing':
+        if user not in ['DMW']: # for testing_set
+            continue
+    elif json_name == 'validation':
+        if user not in ['Jammy']: # for validation_set
+            continue
 
     ori_keypoint = dat['keypoint']
     img_path = dat['path']

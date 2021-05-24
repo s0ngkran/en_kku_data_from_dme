@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>check result</title>
+    <style>
+        .flexcolumn {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .flexrow {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+        }
+
+        .myimg>img {
+            border: 2px solid red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flexrow">
+        <!-- image -->
+        <div class="flexcolumn">
+            <div class="flexrow">
+                <h5>truth</h5>
+            </div>
+            <div class="myimg">
+                <img id="ori" width="180" height="180" src="" alt="">
+                <img id="gts1" width="180" height="180" src="" alt="">
+                <img id="gts2" width="180" height="180" src="" alt="">
+                <img id="gts3" width="180" height="180" src="" alt="">
+                <img id="gtl1" width="180" height="180" src="" alt="">
+                <img id="gtl2" width="180" height="180" src="" alt="">
+                <img id="gtl3" width="180" height="180" src="" alt="">
+            </div>
+            <div class="flexrow">
+                <h5>prediction</h5>
+            </div>
+            <div class="myimg">
+                <img id="ori_" width="180" height="180" src="" alt="">
+                <img id="pred_s1" width="180" height="180" src="" alt="">
+                <img id="pred_s2" width="180" height="180" src="" alt="">
+                <img id="pred_s3" width="180" height="180" src="" alt="">
+                <img id="pred_l1" width="180" height="180" src="" alt="">
+                <img id="pred_l2" width="180" height="180" src="" alt="">
+                <img id="pred_l3" width="180" height="180" src="" alt="">
+            </div>
+
+        </div>
+
+    </div>
+    <!-- tool bar -->
+    <div class="flexrow">
+        <p id="print">log</p>
+    </div>
+    <div class="flexrow">
+        <input type="text" id="myinput" size="30" value="TESTING_FOLDER/">
+    </div>
+    <div class="flexrow">
+        <button id="previous">previous</button>
+        <button id="next">next</button>
+    </div>
+
+    <script>
+        const ori = document.getElementById('ori');
+        const ori_ = document.getElementById('ori_');
+        const gts1 = document.getElementById('gts1');
+        const gts2 = document.getElementById('gts2');
+        const gts3 = document.getElementById('gts3');
+        const gtl1 = document.getElementById('gtl1');
+        const gtl2 = document.getElementById('gtl2');
+        const gtl3 = document.getElementById('gtl3');
+        const pred_s1 = document.getElementById('pred_s1');
+        const pred_s2 = document.getElementById('pred_s2');
+        const pred_s3 = document.getElementById('pred_s3');
+        const pred_l1 = document.getElementById('pred_l1');
+        const pred_l2 = document.getElementById('pred_l2');
+        const pred_l3 = document.getElementById('pred_l3');
+        const previous = document.getElementById('previous');
+        const next = document.getElementById('next');
+        const print = document.getElementById('print');
+        const myinput = document.getElementById('myinput');
+        let num_img = 1;
+        let i = -1;
+        let TESTING_FOLDER = myinput.value;
+
+        next.addEventListener('click', () => {
+            i += 1;
+            if (i == 3) {
+                i = 0;
+                num_img += 1;
+            }
+            write();
+
+
+        })
+
+        previous.addEventListener('click', () => {
+            i -= 1;
+            if (i < 0) {
+                num_img -= 1;
+                i = 2;
+            }
+            write();
+        })
+
+        function write() {
+            TESTING_FOLDER = myinput.value;
+            let ii = 0;
+            let _ = ii + 1;
+            let __ = ii + 2;
+            // print.innerHTML = 'num_img_'+num_img+'&nbsp&nbsp&nbspi_'+i+' &nbsp&nbsp&nbsp  ii_'+ii;
+            let num = ((num_img - 1) * 3) + i;
+            print.innerHTML = 'num_img_' + num;
+            ori.src = './' + TESTING_FOLDER + num_img + '_' + i + '_original' + '.jpg';
+            ori_.src = './' + TESTING_FOLDER + num_img + '_' + i + '_original' + '.jpg';
+            gts1.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + ii + '_gts.jpg';
+            gts2.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + _ + '_gts.jpg';
+            gts3.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + __ + '_gts.jpg';
+            gtl1.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + ii + '_gtl.jpg';
+            gtl2.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + _ + '_gtl.jpg';
+            gtl3.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + __ + '_gtl.jpg';
+            pred_s1.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + ii + '_pred_gts.jpg';
+            pred_s2.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + _ + '_pred_gts.jpg';
+            pred_s3.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + __ + '_pred_gts.jpg';
+            pred_l1.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + ii + '_pred_gtl.jpg';
+            pred_l2.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + _ + '_pred_gtl.jpg';
+            pred_l3.src = './' + TESTING_FOLDER + num_img + '_' + i + '_' + __ + '_pred_gtl.jpg';
+        }
+    </script>
+
+</body>
+
+</html>
