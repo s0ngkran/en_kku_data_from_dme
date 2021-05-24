@@ -1,5 +1,6 @@
 import torch
 import os
+import numpy as np
 import cv2
 import json
 from model03 import HandModel
@@ -14,7 +15,6 @@ if __name__ == '__main__':
     ############################ config ###################
     TRAINING_JSON = 'training.curriculum.json'
     VALIDATION_JSON = 'validation.curriculum.json'
-    TESTING_JSON = 'testing.curriculum.json'
     BATCH_SIZE = 14
     SAVE_EVERY = 1
     LEARNING_RATE = 0.00001
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     LOG_FOLDER = 'log/'
     SAVE_FOLDER = 'save/'
     OPT_LEVEL = 'O1'
-    CHECK_RUN = False
+    CHECK_RUN = True
 
     # continue training
     IS_CONTINUE = True
@@ -32,10 +32,11 @@ if __name__ == '__main__':
     NEW_LEARNING_RATE = 1e-3
 
     # check result
+    TESTING_JSON = 'training.curriculum.json'
     IS_CHECK_RESULT = True
     DEVICE = 'cpu'
     TESTING_FOLDER = 'TESTING_FOLDER'
-    WEIGHT_PATH = './save/train06.pyepoch0000000915.model'
+    WEIGHT_PATH = './save/train06.pyepoch0000000932.model'
     ############################################################
 
 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
             'covered_link': torch.cat(covered_link),
         }
         return ans
-
+    
     # load data
     if not IS_CHECK_RESULT:
         training_set = DMEDataset(training_json, test_mode=CHECK_RUN)
@@ -95,7 +96,6 @@ if __name__ == '__main__':
         testing_set = DMEDataset(testing_json, test_mode=CHECK_RUN)
         testing_set_loader = DataLoader(testing_set,  batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True) #, collate_fn=my_collate)
 
-
     # init model
     channel = 1
     if DEVICE == 'cuda':
@@ -104,6 +104,8 @@ if __name__ == '__main__':
         model = HandModel(channel)
     if not IS_CHECK_RESULT:
         optimizer = torch.optim.Adam(model.parameters())
+        epoch = 0
+    else:
         epoch = 0
     
     # load state
@@ -131,7 +133,7 @@ if __name__ == '__main__':
             print('initing... amp')
             model, optimizer = amp.initialize(model, optimizer, opt_level=OPT_LEVEL)
     else:
-        checkpoint = torch.load(WEIGHT_PATH)
+        checkpoint = torch.load(WEIGHT_PATH, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['model_state_dict'])
 
 
@@ -231,31 +233,42 @@ if __name__ == '__main__':
         # mk folder
         if not os.path.exists(TESTING_FOLDER):
             os.mkdir(TESTING_FOLDER)
+        else:
+            os.system('rm -r %s'%TESTING_FOLDER)
+            os.mkdir(TESTING_FOLDER)
 
         with torch.no_grad():
             loss, loss_gts, loss_gtl = [], [], []
             num_image = 0
-            for iteration, dat in enumerate(validation_set_loader):
+            for iteration, dat in enumerate(testing_set_loader):
                 iteration += 1
+                print('iteration', iteration, len(testing_set_loader))
                 # write original image
                 _image = dat['image']
                 for i, img in enumerate(_image):
+                    img = np.array(img)
                     cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_original.jpg'%i), img)
 
                 # write gtl image
-                for img in dat['gtl']:
-                    img = img.mean(0).T
-                    cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_gtl.jpg'%i), img)
+                for i, gtl in enumerate(dat['gtl']):
+                    for ii, img in enumerate(gtl):
+                        img = img.mean(0).T
+                        img = np.array(img) 
+                        img = img*255
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_%d_gtl.jpg'%(i, ii)), img)
+                
 
                 # write gts image
-                for img in dat['gts']:
-                    img = img.max(0)[0].T
-                    cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_gts.jpg'%i), img)
+                for i, gts in enumerate(dat['gts']):
+                    for ii, img in enumerate(gts):
+                        img = img.max(0)[0].T
+                        img = np.array(img)*255
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_%d_gts.jpg'%(i, ii)), img)
 
 
                 # manage before feed to model
                 if DEVICE != 'cuda':
-                    image = dat['image'].half()/255
+                    image = dat['image']/255
                 else:
                     image = dat['image'].half().cuda()/255
                 image = image.unsqueeze(1) 
@@ -267,14 +280,16 @@ if __name__ == '__main__':
                 s_group = output[0]
                 l_group = output[1]
 
-                for l in l_group:
-                    for batch in l:
+                for i, l in enumerate(l_group):
+                    for ii, batch in enumerate(l):
                         img = batch.mean(0).T
-                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_pred_gtl.jpg'%i), img)
-                for s in s_group:
-                    for batch in s:
+                        img = np.array(img)*255
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_%d_pred_gtl.jpg'%(i, ii)), img)
+                for i, s in enumerate(s_group):
+                    for ii, batch in enumerate(s):
                         img = batch.max(0)[0].T
-                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_pred_gts.jpg'%i), img)
+                        img = np.array(img)*255
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_%d_pred_gts.jpg'%(i, ii)), img)
 
             #     loss_, loss_gts_, loss_gtl_ = loss_func(
             #         output, dat['gts'], dat['gts_mask'], dat['covered_point'], dat['gtl'], dat['gtl_mask'], dat['covered_link'])
@@ -294,6 +309,7 @@ if __name__ == '__main__':
             validation()
         else:
             test()
+            break
 
         if epoch == 1 or epoch % SAVE_EVERY == 0 and not IS_CHECK_RESULT:
             torch.save({
