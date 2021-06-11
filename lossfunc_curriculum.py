@@ -7,9 +7,9 @@ from util.Logger import Logger
 logger = Logger('log_loss')
 def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, covered):
     batch = gtl.shape[0]
-    width = gtl.shape[2]
-    height = gtl.shape[3]
-    shape = gtl.shape     # batch, depth, width, height
+    # width = gtl.shape[2]
+    # height = gtl.shape[3]
+    # shape = gtl.shape     # batch, depth, width, height
     loss = 0
     loss_gts = 0
     loss_gtl = 0

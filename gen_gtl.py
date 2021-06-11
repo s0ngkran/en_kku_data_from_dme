@@ -147,8 +147,8 @@ def gt_vec_with_covered(width, height, keypoint, size=20, link=link12from25):
         c2 = abs(np.dot(u_vec_p,temp)) <= size
         mask = c1 & c2
         
-        ans[ index*2] = torch.tensor(u_vec[0] * mask).reshape(width, height)  #x
-        ans[ index*2+1] = torch.tensor(u_vec[1] * mask).reshape(width, height) #y
+        ans[index*2] = torch.tensor(u_vec[0] * mask).reshape(width, height)  #x
+        ans[index*2+1] = torch.tensor(u_vec[1] * mask).reshape(width, height) #y
 
         gtl_mask[index*2] = torch.tensor(mask).reshape(width, height) # use float instead of bool for interpolate in the next process
         gtl_mask[index*2+1] = torch.tensor(mask).reshape(width, height)
@@ -167,6 +167,7 @@ def distance (p1, p2):
     disty = (p1[1]-p2[1])**2
     return (distx+disty)**0.5
 def gen_12_keypoint_with_covered_link(keypoint, width, height, sigma=0.4):
+    resized_size = (60, 60)
     finger_link = [[5,6],[6,7],[7,8],[9,10],[10,11],[11,12],[13,14],[14,15],[15,16],[17,18],[18,19],[19,20]]
     dist_finger = [distance(keypoint[i], keypoint[j]) for i,j in finger_link]
     dist_finger = sum(dist_finger)/len(dist_finger)
@@ -176,10 +177,10 @@ def gen_12_keypoint_with_covered_link(keypoint, width, height, sigma=0.4):
     keypoint = [np.array(i) for i in keypoint]
     gtl, gtl_mask, covered_link = gt_vec_with_covered(width, height, keypoint, size=small_sigma, link=link12from25)
     
-    gtl = F.interpolate(gtl.unsqueeze(0), size=(45,45), mode='nearest').squeeze(0)
+    gtl = F.interpolate(gtl.unsqueeze(0), size=resized_size, mode='nearest').squeeze(0)
 
     # manage gtl_mask
-    gtl_mask = F.interpolate(gtl_mask.unsqueeze(0), size=(45,45), mode='bicubic').squeeze(0)
+    gtl_mask = F.interpolate(gtl_mask.unsqueeze(0), size=resized_size, mode='bicubic').squeeze(0)
     gtl_mask[gtl_mask > 0.5] = 1
     gtl_mask[gtl_mask <= 0.5] = 0
     gtl_mask = gtl_mask.type(torch.BoolTensor)

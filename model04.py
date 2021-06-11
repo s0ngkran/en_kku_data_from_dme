@@ -1,8 +1,11 @@
+# using pre-trained VGG
+from torchvision import transforms
 import torch
 from collections import OrderedDict
 import torch.nn.functional as F
 import torch.nn as nn
-# commit edit dropout p(0)=0.2 
+import torchvision.models as models
+
 def make_vgg(block, no_relu_layers):
     layers = []
     for layer_name, v in block.items():
@@ -32,14 +35,57 @@ class HandModel(torch.nn.Module):
                       ('conv3_1', [128, 256, 3, 1, 1]),
                       ('conv3_2', [256, 256, 3, 1, 1]),
                       ('conv3_3', [256, 256, 3, 1, 1]),
-                      ('conv3_4', [256, 256, 3, 1, 1]),
                       ('pool3_stage1', [2, 2, 0]),
                       ('conv4_1', [256, 512, 3, 1, 1]),
                       ('conv4_2', [512, 512, 3, 1, 1]),
-                      ('conv4_3_CPM', [512, 256, 3, 1, 1]),
-                      ('conv4_4_CPM', [256, 128, 3, 1, 1])
                       ])
         self.vgg = make_vgg(vgg, no_relu_layers)
+        '''
+        transfer weight
+
+        vgg16 features
+        0 torch.Size([64, 3, 3, 3])
+        1 ReLU
+        2 torch.Size([64, 64, 3, 3])
+        3 ReLU
+        4 MaxPool2d
+        5 torch.Size([128, 64, 3, 3])
+        6 ReLU
+        7 torch.Size([128, 128, 3, 3])
+        8 ReLU
+        9 MaxPool2d
+        10 torch.Size([256, 128, 3, 3])
+        11 ReLU
+        12 torch.Size([256, 256, 3, 3])
+        13 ReLU
+        14 torch.Size([256, 256, 3, 3])
+        15 ReLU
+        16 MaxPool2d
+        17 torch.Size([512, 256, 3, 3])
+        18 ReLU
+        19 torch.Size([512, 512, 3, 3])
+        20 ReLU
+
+        '''
+        trained_vgg = models.vgg16(pretrained=True)
+        for i in range(0, 21):
+            trained_feature = trained_vgg.features[i]
+            self_vgg_feature = self.vgg[i]
+            layer_name_trained = type(trained_feature).__name__
+            if layer_name_trained.startswith('Conv2d'):
+                print('trained transfer...', trained_feature.weight.shape, '->', self_vgg_feature.weight.shape)
+                self_vgg_feature.weight = trained_feature.weight
+                self_vgg_feature.bias = trained_feature.bias
+                for param in self_vgg_feature.parameters():
+                    param.requires_grad = False
+
+        no_relu_layers = []
+        _ = OrderedDict([
+            ('conv4_3_CPM', [512, 256, 3, 1, 1]),
+            ('conv4_4_CPM', [256, 128, 3, 1, 1])
+        ])
+        self.vgg_fine_tuning = make_vgg(_, no_relu_layers)
+            
         self.drop = nn.Dropout(p=0.2)
         
         out_channel_from_vgg = 128
@@ -62,23 +108,27 @@ class HandModel(torch.nn.Module):
         # self.S6 = Stage(159, 11)
         
     def forward(self, x):
-        Fea = self.vgg(x)
-  
-        # Fea = self.drop(Fea)
-        # L1 = self.L1(Fea) # 256
-        # L1 = torch.tanh(L1)
-        # S1 = self.S1(torch.cat([Fea, L1], dim=1)) # 256 + 46
-        # S1 = torch.sigmoid(S1) 
-        
-        # L2 = self.L2(torch.cat([Fea, L1], dim=1)) # 256 + 46
-        # L2 = torch.tanh(L2)
-        # S2 = self.S2(torch.cat([Fea, L2, S1], dim=1)) # 256 + 46 + 25
-        # S2 = torch.sigmoid(S2)
+        # fix weight
+        pre_trained_vgg = self.vgg(x)
 
-        # L3 = self.L3(torch.cat([Fea, L2], dim=1)) # 256 + 46
-        # L3 = torch.tanh(L3)
-        # S3 = self.S3(torch.cat([Fea, L3, S2], dim=1)) # 256 + 46 + 25
-        # S3 = torch.sigmoid(S3)
+        # running weight
+        features = self.vgg_fine_tuning(pre_trained_vgg)
+        features = self.drop(features)
+
+        L1 = self.L1(features) # 256
+        L1 = torch.tanh(L1)
+        S1 = self.S1(torch.cat([features, L1], dim=1)) # 256 + 46
+        S1 = torch.sigmoid(S1) 
+        
+        L2 = self.L2(torch.cat([features, L1], dim=1)) # 256 + 46
+        L2 = torch.tanh(L2)
+        S2 = self.S2(torch.cat([features, L2, S1], dim=1)) # 256 + 46 + 25
+        S2 = torch.sigmoid(S2)
+
+        L3 = self.L3(torch.cat([features, L2], dim=1)) # 256 + 46
+        L3 = torch.tanh(L3)
+        S3 = self.S3(torch.cat([features, L3, S2], dim=1)) # 256 + 46 + 25
+        S3 = torch.sigmoid(S3)
 
 
 
@@ -106,7 +156,7 @@ class HandModel(torch.nn.Module):
         # S6 = self.S6(torch.cat([Fea, L6, S5], dim=1))    
         # return L1, L2, L3, L4, L5, L6, S1, S2, S3, S4, S5, S6
       
-        return Fea  # , (S1, S2, S3), (L1, L2, L3)
+        return (S1, S2, S3), (L1, L2, L3)
 
 class Stage(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -173,9 +223,37 @@ class ConvWithBN(nn.Module):
         x = self.bn(x)
         return x
 
+def test_forword_with_example_image():
+    import urllib
+    url, filename = (
+        "https://github.com/pytorch/hub/raw/master/images/dog.jpg", "dog.jpg")
+    try:
+        urllib.URLopener().retrieve(url, filename)
+    except:
+        urllib.request.urlretrieve(url, filename)
+
+    from PIL import Image
+    input_image = Image.open(filename)
+    preprocess = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                            std=[0.229, 0.224, 0.225]),
+    ])
+    input_tensor = preprocess(input_image)
+    input_batch = input_tensor.unsqueeze(0)
+
+    print('image shape', input_batch.shape)
+    model = HandModel(3)
+    outputs = model(input_batch)
+    for output in outputs:
+        for stage in output:
+            print(stage[0].shape)
+
 def test_forward():
-    model = HandModel(1)
-    img = torch.rand([2,1,480,480]).type(torch.float32)
+    model = HandModel(3)
+    img = torch.rand([2,3,480,480]).type(torch.float32)
     print('input=',img.shape)
     output = model(img)
     print(output.shape)
@@ -209,5 +287,6 @@ def check_model_size():
     input('pause')
     
 if __name__ =='__main__':
-    test_forward()
+    # test_forward()
+    test_forword_with_example_image()
 

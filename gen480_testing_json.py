@@ -82,9 +82,9 @@ def create_curriculum_gt(keypoint):
 json_data = []
 
 # write json_data     ############################# config
-json_name = 'training'
+# json_name = 'training'
 # json_name = 'validation'
-# json_name = 'testing'
+json_name = 'testing'
 
 if json_name == 'training':
     augment_replica = 4

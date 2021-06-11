@@ -1,0 +1,3 @@
+python gen480_testing_json.py
+python gen480_validation_json.py
+python gen480_training_json.py
