@@ -2,10 +2,24 @@ from torch.utils.data import Dataset
 import numpy as np
 import cv2
 import torch
+from PIL import Image
+from torchvision import transforms
+
 class DMEDataset(Dataset):
-    def make_grayscale(self, image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    def make_grayscale(self, img_path):
+        image_cv2 = cv2.imread(img_path)
+        gray = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
         return gray
+    def preprocessing_for_vgg(self, image_path):
+        image = Image.open(image_path)
+        preprocess = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+        ])
+        image_tensor = preprocess(image)
+        return image_tensor
+
 
     def __init__(self, json, test_mode=False):
         if test_mode:
@@ -30,9 +44,9 @@ class DMEDataset(Dataset):
             covered_link = dat['covered_link']
 
             
-            img = cv2.imread(img_path)
             self.image_path.append(dat['path'])
-            self.images.append(self.make_grayscale(img))
+            # self.images.append(self.make_grayscale(img_path))
+            self.images.append(self.preprocessing_for_vgg(img_path))
             self.gts.append(torch.load(gts_path).float())
             self.gtl.append(torch.load(gtl_path).float())
             self.gts_mask.append(torch.load(gts_mask_path).float())
