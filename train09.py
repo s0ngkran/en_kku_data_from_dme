@@ -14,13 +14,13 @@ if __name__ == '__main__':
     VALIDATION_JSON = 'validation.curriculum.json'
     BATCH_SIZE = 14
     SAVE_EVERY = 2
-    LEARNING_RATE = 1e-3
+    LEARNING_RATE = 1e-4
     TRAINING_NAME = os.path.basename(__file__)
     NUM_WORKERS = 10
     LOG_FOLDER = 'log/'
     SAVE_FOLDER = 'save/'
     OPT_LEVEL = 'O2'
-    CHECK_RUN = True
+    CHECK_RUN = False
 
     # continue training
     IS_CONTINUE = False
@@ -30,11 +30,12 @@ if __name__ == '__main__':
 
     # check result
     IS_CHECK_RESULT = False
-    TESTING_JSON = 'training.curriculum480.json'
+    TESTING_JSON = 'training.curriculum.json'
     DEVICE = 'cpu'
     TESTING_FOLDER = 'TESTING_FOLDER'
     WEIGHT_PATH = './save/train06.pyepoch0000000932.model'
     ############################################################
+    print('starting...')
 
 
 
@@ -71,7 +72,7 @@ if __name__ == '__main__':
             covered_link.append(i['covered_link'])
         ans = {
             'image_path': image_path,
-            'image': torch.stack(image),
+            'image': torch.cat(image),
             'gts': torch.cat(gts),
             'gtl': torch.cat(gtl),
             'gts_mask': torch.cat(gts_mask),
@@ -85,8 +86,8 @@ if __name__ == '__main__':
     if not IS_CHECK_RESULT:
         training_set = DMEDataset(training_json, test_mode=CHECK_RUN)
         validation_set = DMEDataset(validation_json, test_mode=CHECK_RUN)
-        training_set_loader = DataLoader(training_set, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True ) #, collate_fn=my_collate)
-        validation_set_loader = DataLoader(validation_set,  batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True) #, collate_fn=my_collate)
+        training_set_loader = DataLoader(training_set, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True, drop_last=True) #, collate_fn=my_collate)
+        validation_set_loader = DataLoader(validation_set,  batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True, drop_last=True) #, collate_fn=my_collate)
     else:
         testing_set = DMEDataset(testing_json, test_mode=CHECK_RUN)
         testing_set_loader = DataLoader(testing_set,  batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True) #, collate_fn=my_collate)
@@ -170,7 +171,6 @@ if __name__ == '__main__':
         for iteration, dat in enumerate(training_set_loader):
             iteration += 1
             image = dat['image'].half().cuda()/255
-            image = image.unsqueeze(1)
             
             output = model(image)
 
@@ -181,6 +181,8 @@ if __name__ == '__main__':
             # print(dat['covered_link'].shape)
             loss, loss_gts, loss_gtl = loss_func(
                 output, dat['gts'], dat['gts_mask'], dat['covered_point'], dat['gtl'], dat['gtl_mask'], dat['covered_link'])
+            if CHECK_RUN:
+                print('loss_', loss.item())
 
             # if iteration%100 == 0:
             #     print(epoch, iteration, loss.item())
@@ -204,12 +206,13 @@ if __name__ == '__main__':
             for iteration, dat in enumerate(validation_set_loader):
                 iteration += 1
                 image = dat['image'].half().cuda()/255
-                image = image.unsqueeze(1)
 
                 output = model(image)
 
                 loss_, loss_gts_, loss_gtl_ = loss_func(
                     output, dat['gts'], dat['gts_mask'], dat['covered_point'], dat['gtl'], dat['gtl_mask'], dat['covered_link'])
+                if CHECK_RUN:
+                    print('loss_', loss_)
                 loss.append(loss_)
                 loss_gts.append(loss_gts_)
                 loss_gtl.append(loss_gtl_)

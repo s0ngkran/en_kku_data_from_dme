@@ -5,6 +5,16 @@ import copy
 sys.path.append('..')
 # from util.Logger import Logger
 # logger = Logger('log_loss')
+def print_if_nan(tensor):
+    if torch.isnan(tensor).any():
+        print('this is nan tensor=>', tensor)
+        1/0
+    elif torch.isinf(tensor).any():
+        print('this is inf tensor=>', tensor)
+        2/0
+    else:
+        pass
+
 
 def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, covered):
     n_batch = gtl.shape[0]
@@ -17,6 +27,7 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
 
     pred_s = torch.stack(out[0]).transpose(0,1).cpu()
     pred_l = torch.stack(out[1]).transpose(0,1).cpu()
+    debug = False
 
     # 15, 3, 14, 45, 45
     ##################### loss with F score idea ##############
@@ -26,33 +37,52 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
 
     pred_s_uncovered = pred_s[gts_covered == False]
     gts_uncovered = gts[gts_covered == False]
+    if debug:
+        print_if_nan(gts_uncovered)
+
     y_diff_s = torch.abs(pred_s_uncovered - gts_uncovered)
     y_diff_mean_s = torch.mean(y_diff_s)
+    if debug:
+        print_if_nan(y_diff_mean_s)
 
     n_pred_s = torch.mean((pred_s_uncovered > thres).float())
     n_gt_s = torch.mean((gts_uncovered > thres).float())
     n_diff_mean_s = torch.abs(n_pred_s-n_gt_s)
+    if debug:
+        print_if_nan(n_diff_mean_s)
 
     loss_gts = (1-y_diff_mean_s) * (1-n_diff_mean_s)
+    if debug:
+        print_if_nan(loss_gts)
     loss_gts = - torch.log(loss_gts)
     loss += loss_gts
+    if debug:
+        print_if_nan(loss_gts)
 
     ################################### link
     thres = 0.01
 
     # find active pixels of pred_l both covered and uncovered
     pred_l_abs = torch.abs(pred_l)
-    x_index = [i*2 for i in range(gtl.shape[2])]
-    y_index = [i*2+1 for i in range(gtl.shape[2])]
-    
+    x_index = [i*2 for i in range(int(gtl.shape[2]/2))]
+    y_index = [i*2+1 for i in range(int(gtl.shape[2]/2))]
+    if debug:
+        print('x_index', x_index)
+        print('y_index', y_index)
     x = pred_l_abs[:, :, x_index]
     y = pred_l_abs[:, :, y_index]
     n_i_active_x = x >= thres
     n_i_active_y = y >= thres
+    if debug:
+        print('n_i_active_x', n_i_active_x.shape)
+        print('n_i_active_y', n_i_active_y.shape)
     n_i_active = n_i_active_x | n_i_active_y
+    if debug:
+        print('gtl_covered', gtl_covered.shape)
+    gtl_covered_half = gtl_covered[:,:,x_index]
 
     # get uncovered
-    n_i_active_uncovered = n_i_active[gtl_covered==False]
+    n_i_active_uncovered = n_i_active[gtl_covered_half==False]
     n_mean_pred_l = torch.mean(n_i_active_uncovered.float())
 
 
@@ -72,6 +102,8 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
     loss_gtl = (1-y_diff_mean) * (1-n_diff_mean_l)
     loss_gtl = - torch.log(loss_gtl)
     loss += loss_gtl
+    if debug:
+        print_if_nan(loss_gtl)
     
     return loss, loss_gtl, loss_gtl
 
