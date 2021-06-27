@@ -20,7 +20,7 @@ if __name__ == '__main__':
     LOG_FOLDER = 'log/'
     SAVE_FOLDER = 'save/'
     OPT_LEVEL = 'O2'
-    CHECK_RUN = False
+    CHECK_RUN = True
 
     # continue training
     IS_CONTINUE = False
@@ -29,11 +29,11 @@ if __name__ == '__main__':
     NEW_LEARNING_RATE = 1e-3
 
     # check result
-    IS_CHECK_RESULT = False
+    IS_CHECK_RESULT = True
     TESTING_JSON = 'training.curriculum.json'
     DEVICE = 'cpu'
     TESTING_FOLDER = 'TESTING_FOLDER'
-    WEIGHT_PATH = './save/train06.pyepoch0000000932.model'
+    WEIGHT_PATH = './save/train09.pyepoch0000000188.model'
     ############################################################
     print('starting...')
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         testing_set_loader = DataLoader(testing_set,  batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True) #, collate_fn=my_collate)
 
     # init model
-    channel = 1
+    channel = 3
     if not IS_CHECK_RESULT:
         model = HandModel(channel).to('cuda')
         optimizer = torch.optim.Adam(model.parameters())
@@ -195,6 +195,7 @@ if __name__ == '__main__':
             with amp.scale_loss(loss, optimizer) as scaled_loss:
                 scaled_loss.backward()
             optimizer.step()
+
         if CHECK_RUN:
             print('loss',loss.item())
 
@@ -244,10 +245,19 @@ if __name__ == '__main__':
                 iteration += 1
                 print('iteration', iteration, len(testing_set_loader))
                 # write original image
-                _image = dat['image']
-                for i, img in enumerate(_image):
-                    img = np.array(img)
-                    cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_original.jpg'%i), img)
+                _image = dat['image'] # img.shape == 14, ch, 360, 360
+                if _image.shape[1] == 1:
+                    for i, img in enumerate(_image):
+                        img = np.array(img)
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_original.jpg'%i), img)
+
+                else: # using io and transform
+                    img_paths = dat['image_path']
+                    for i, path in enumerate(img_paths):
+                        img = cv2.imread(path)
+                        cv2.imwrite(os.path.join(TESTING_FOLDER, str(iteration)+'_%d_original.jpg'%i), img)
+
+
 
                 # write gtl image
                 for i, gtl in enumerate(dat['gtl']):
@@ -271,7 +281,9 @@ if __name__ == '__main__':
                     image = dat['image']/255
                 else:
                     image = dat['image'].half().cuda()/255
-                image = image.unsqueeze(1) 
+
+                if image.shape[2] == 1:
+                    image = image.unsqueeze(1) 
                 # image size => batch, 3, 1, x, y
 
                 output = model(image) # (s1,2,3), (l1,2,3)
