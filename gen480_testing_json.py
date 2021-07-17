@@ -6,8 +6,8 @@ import os
 from shutil import copyfile
 from do_augment import *
 import torch
-from gen_gts import gen_12_keypoint_with_covered_point as gen_gts
-from gen_gtl import gen_12_keypoint_with_covered_link as gen_gtl
+from gen_gts import gen_12_keypoint_with_covered_point as gen_12_gts
+from gen_gtl import gen_12_keypoint_with_covered_link as gen_12_gtl
 
 # open data
 with open('hands_json_with_name', 'r') as f:
@@ -50,9 +50,9 @@ def create_augment(dat):
 
 def create_gt(keypoint):
     # gen gtl
-    gtl, covered_link = gen_gtl(keypoint, w, h)
+    gtl, covered_link = gen_12_gtl(keypoint, w, h)
     # gen gts
-    gts, covered_point = gen_gts(keypoint, w, h)
+    gts, covered_point = gen_12_gts(keypoint, w, h)
 
     return gts, gtl, covered_point, covered_link
 
@@ -60,13 +60,13 @@ def create_curriculum_gt(keypoint):
     gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered = [],[],[],[],[],[]
     for sigma in [0.7, 0.55, 0.4]:
         # gen gtl
-        gtl_, gtl_mask_, gtl_covered_ = gen_gtl(keypoint, w, h, sigma=sigma)
+        gtl_, gtl_mask_, gtl_covered_ = gen_12_gtl(keypoint, w, h, sigma=sigma)
         gtl.append(gtl_)
         gtl_mask.append(gtl_mask_)
         gtl_covered.append(gtl_covered_)
 
         # gen gts
-        gts_, gts_mask_, gts_covered_ = gen_gts(keypoint, w, h, sigma=sigma)
+        gts_, gts_mask_, gts_covered_ = gen_12_gts(keypoint, w, h, sigma=sigma)
         gts.append(gts_)
         gts_mask.append(gts_mask_)
         gts_covered.append(gts_covered_)

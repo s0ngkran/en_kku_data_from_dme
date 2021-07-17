@@ -20,12 +20,12 @@ if __name__ == '__main__':
     LOG_FOLDER = 'log/'
     SAVE_FOLDER = 'save/'
     OPT_LEVEL = 'O2'
-    CHECK_RUN = False
+    CHECK_RUN = True
 
     # continue training
     IS_CONTINUE = True
     IS_CHANGE_LEARNING_RATE = False
-    CONTINUE_PATH = './save/train09.pyepoch0000003702.model'
+    CONTINUE_PATH = './save/train09.pyepoch0000003700.model'
     NEW_LEARNING_RATE = 1e-4
 
     # check result
@@ -108,8 +108,8 @@ if __name__ == '__main__':
             checkpoint = torch.load(CONTINUE_PATH)
             model.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            # amp.load_state_dict(checkpoint['amp_state_dict'])
             epoch = checkpoint['epoch']
+
             if IS_CHANGE_LEARNING_RATE:
                 # scale learning rate
                 update_per_epoch = len(training_set_loader)/BATCH_SIZE

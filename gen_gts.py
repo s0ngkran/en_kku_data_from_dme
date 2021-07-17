@@ -93,3 +93,42 @@ def gen_12_keypoint_with_covered_point(keypoint, width, height, sigma=0.4):
     gts_mask = gts_mask.type(torch.bool)
 
     return gts, gts_mask, covered_point
+
+
+def gen_2_keypoint_with_covered_point(keypoint, width, height, sigma=0.4):
+    '''
+    finger_link is used for calculate the ratio of hand-scale
+    '''
+    resized_size = (60, 60)
+    finger_link = [[5, 6], [6, 7], [7, 8], [9, 10], [10, 11], [11, 12], [13, 14], [14, 15], [15, 16], [17, 18], [18, 19], [19, 20]]
+    dist_finger = [distance(keypoint[i], keypoint[j]) for i, j in finger_link]
+    dist_finger = sum(dist_finger)/len(dist_finger)
+
+    big_link = [[4, 5], [4, 9], [4, 13], [4, 17], [4, 0]]
+    dist_big = [distance(keypoint[i], keypoint[j]) for i, j in big_link]
+    dist_big = sum(dist_big)/len(dist_big)
+
+    small_sigma = dist_finger * sigma
+    big_sigma = dist_big * sigma * 1.3
+    gts = []
+
+    ### config ####
+    covered_point = []
+    for ind, (x, y, covered) in enumerate(keypoint):
+        if ind in index_point12_from25:
+            covered_point.append(covered)
+            if ind in [0, 1, 4, 21]:
+                sigma = big_sigma
+            else:
+                sigma = small_sigma
+            gts.append(gen_gts(x, y, width, height, sigma))
+    gts = torch.stack(gts)
+    gts = F.interpolate(gts.unsqueeze(0), size=resized_size,
+                        mode='bicubic').squeeze(0)
+
+    # gen gts mask
+    gts_mask = torch.zeros(gts.shape)
+    gts_mask[gts > 0.01] = 1
+    gts_mask = gts_mask.type(torch.bool)
+
+    return gts, gts_mask, covered_point
