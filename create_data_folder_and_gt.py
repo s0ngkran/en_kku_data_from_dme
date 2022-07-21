@@ -10,7 +10,7 @@ from gen_gts import gen_12_keypoint_with_covered_point as gen_12_gts
 from gen_gtl import gen_12_keypoint_with_covered_link as gen_12_gtl
 
 # open data
-with open('hands_json_with_name', 'r') as f:
+with open('hands_json_witnaturalh_name', 'r') as f:
     data = json.load(f)
 
 w, h = 480, 480

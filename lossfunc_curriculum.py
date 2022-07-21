@@ -7,16 +7,35 @@ from util.Logger import Logger
 logger = Logger('log_loss')
 def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, covered):
     batch = gtl.shape[0]
-    # width = gtl.shape[2]
-    # height = gtl.shape[3]
-    # shape = gtl.shape     # batch, depth, width, height
+    width = gtl.shape[2]
+    height = gtl.shape[3]
+    shape = gtl.shape     # batch, depth, width, height
     loss = 0
     loss_gts = 0
     loss_gtl = 0
 
     pred_s = torch.stack(out[0]).transpose(0,1).cpu()
     pred_l = torch.stack(out[1]).transpose(0,1).cpu()
+    # print('p s', pred_s.shape)
+    # print('p l', pred_l.shape)
+    # print('gts', gts.shape)
+    # print('gtl', gtl.shape)
     
+    # for single stage
+    # convert single stage to curriculum stage
+    # [5,24,45,45] => [5,3,24,45,45]
+    gts = torch.stack([gts, gts, gts]).transpose(0,1)
+    gtl = torch.stack([gtl, gtl, gtl]).transpose(0,1)
+
+    # print('gts m', gts_mask.shape)
+    # print('gtl m', gtl_mask.shape)
+    gts_mask = torch.stack([gts_mask for i in range(3)]).transpose(0,1)
+    gtl_mask = torch.stack([gtl_mask for i in range(3)]).transpose(0,1)
+    # print('gts_covered', gts_covered.shape)
+    # print('gtl_covered', gtl_covered)
+    gts_covered = torch.stack([gts_covered for i in range(3)]).transpose(0,1)
+    gtl_covered = torch.stack([gtl_covered for i in range(3)]).transpose(0,1)
+  
     ############################  gts  ##########################################
     thres_zero = 4/96 *0.6
     thres_non  = 0.4
@@ -25,8 +44,6 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
     # weight[gt_s < thres] *= thres_zero
     # weight[gt_s >= thres] *= thres_non
 
-    # print('--', pred_s.shape, gts.shape)
-    # 1/0
     loss_ = ((pred_s - gts)**2)
     loss_[gts_mask==False] *= thres_zero
     loss_[gts_mask==True] *= thres_non
@@ -83,6 +100,7 @@ def loss_func(out, gts, gts_mask, gts_covered, gtl, gtl_mask, gtl_covered):  #, 
     loss_gts /= batch
     loss_gtl /= batch
     return loss, loss_gts, loss_gtl
+
 def testloss():
     import copy
     torch.manual_seed(7)

@@ -17,6 +17,7 @@ from util.Logger import Logger
 from util.data import data015_480_bigger as Data
 from model03 import HandModel
 from loss_function import loss_func
+
 class Config:
     def __init__(self):
         

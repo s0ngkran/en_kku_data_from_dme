@@ -88,7 +88,6 @@ class HandModel(torch.nn.Module):
         # L6 = self.L6(torch.cat([Fea, L5], dim=1))
         # S6 = self.S6(torch.cat([Fea, L6, S5], dim=1))    
         # return L1, L2, L3, L4, L5, L6, S1, S2, S3, S4, S5, S6
-      
         return L1, L2, S1, S2
 
 class Stage(nn.Module):

@@ -20,20 +20,20 @@ if __name__ == '__main__':
     LOG_FOLDER = 'log/'
     SAVE_FOLDER = 'save/'
     OPT_LEVEL = 'O2'
-    CHECK_RUN = False
+    CHECK_RUN = True
 
     # continue training
-    IS_CONTINUE = True
+    IS_CONTINUE = False
     IS_CHANGE_LEARNING_RATE = False
     CONTINUE_PATH = './save/train09.pyepoch0000003702.model'
     NEW_LEARNING_RATE = 1e-4
 
     # check result
-    IS_CHECK_RESULT = False
+    IS_CHECK_RESULT = True
     TESTING_JSON = 'training.curriculum.json'
     DEVICE = 'cpu'
     TESTING_FOLDER = 'TESTING_FOLDER'
-    WEIGHT_PATH = './save/train09.pyepoch0000003702.model'
+    WEIGHT_PATH = './save/train09.pyepoch0000006362.model'
     ############################################################
     print('starting...')
 

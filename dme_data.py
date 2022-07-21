@@ -1,13 +1,29 @@
+import json
 from torch.utils.data import Dataset
 import numpy as np
 import cv2
 import torch
+
+
 class DMEDataset(Dataset):
     def make_grayscale(self, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return gray
+    def read_keypoint_from_json(json):
+        return
 
-    def __init__(self, json, test_mode=False):
+    def __init__(self, json=None, json_path=None, test_mode=False):
+        false = False
+        true = True
+        a  =     {"path": "testing_set/0IMG_1789.jpg", "keypoint": [[271.8, 216.8, "0", "0"], [234.8, 185.30000000000004, "0", "0"], [222.3, 173.8, "0", "0"], [210.3, 161.8, "1", "1"], [270.8, 183.29999999999998, "0", "0"], [256.3, 150.3, "0", "0"], [252.3, 135.8, "0", "0"], [250.3, 120.8, "0", "0"], [246.3, 109.3, "0", "0"], [269.3, 148.3, "0", "0"], [271.3, 131.3, "0", "0"], [272.3, 114.8, "0", "0"], [272.8, 97.3, "0", "0"], [282.3, 152.3, "0", "0"], [284.8, 134.3, "0", "0"], [284.8, 116.3, "0", "0"], [287.3, 101.80000000000001, "0", "0"], [294.3, 161.3, "0", "0"], [301.3, 146.8, "0", "0"], [305.3, 136.8, "0", "0"], [313.3, 124.30000000000001, "0", "0"], [161.29999999999998, 160.8, "0", "0"], [180.8, 160.8, "0", "0"], [193.8, 160.8, "0", "0"], [206.3, 158.8, "0", "0"]], "hand_side": "L", "gt": "2\n", "user": "DMW", "status": "testing", "gts": "testing_set/0IMG_1789.jpg.gts", "gtl": "testing_set/0IMG_1789.jpg.gtl", "covered_point": ["0", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"], "covered_link": [false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]}
+        for k,v in a.items():
+            print(k, v)
+        return
+        if json_path is not None:
+            with open(json_path, 'r') as f:
+                json = json.load(f)
+            json = json
+            ### return new json
         if test_mode:
             json = json[:50]
         self.images = []
@@ -52,3 +68,16 @@ class DMEDataset(Dataset):
             'covered_link': self.covered_link[idx],
         }
         return ans
+
+def main():
+    json = 'validation_json_with_covered'
+    with open(json, 'r') as f:
+        json_obj = json.load(f)
+    data = DMEDataset(json_obj)
+    print('n_data=', len(data))
+
+def dummy_init():
+    data = DMEDataset()
+
+if __name__ == '__main__':
+    dummy_init()

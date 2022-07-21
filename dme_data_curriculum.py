@@ -20,7 +20,6 @@ class DMEDataset(Dataset):
         image_tensor = preprocess(image)
         return image_tensor
 
-
     def __init__(self, json, test_mode=False):
         if test_mode:
             json = json[:50]
@@ -43,7 +42,6 @@ class DMEDataset(Dataset):
             covered_point = dat['covered_point']
             covered_link = dat['covered_link']
 
-            
             self.image_path.append(dat['path'])
             # self.images.append(self.make_grayscale(img_path))
             self.images.append(self.preprocessing_for_vgg(img_path))

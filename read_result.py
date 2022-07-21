@@ -94,10 +94,11 @@ def custom_plot():
 def main(**kwargs):
     tr = input('training num (e.g. 1, 2, 3, ...) = ')
     save_folder = 'log/'
-    read_and_plot(save_folder + 'train%s.py.loss' % (str(tr).zfill(2)), 'r.', **kwargs)
-    read_and_plot(save_folder + 'train%s.py.loss_va' % (str(tr).zfill(2)), 'b-', **kwargs)
-    read_and_plot(save_folder + 'train%s.py.gts_loss' % (str(tr).zfill(2)), 'g.', **kwargs)
-    read_and_plot(save_folder + 'train%s.py.gtl_loss' % (str(tr).zfill(2)), 'yx', **kwargs)
+    py = 'py'
+    read_and_plot(save_folder + 'train%s.%s.loss' % (str(tr).zfill(2), py), 'r.', **kwargs)
+    read_and_plot(save_folder + 'train%s.%s.loss_va' % (str(tr).zfill(2), py), 'b-', **kwargs)
+    read_and_plot(save_folder + 'train%s.%s.gts_loss' % (str(tr).zfill(2), py), 'g.', **kwargs)
+    read_and_plot(save_folder + 'train%s.%s.gtl_loss' % (str(tr).zfill(2), py), 'yx', **kwargs)
     plt.show()
 
 if __name__ == '__main__':
