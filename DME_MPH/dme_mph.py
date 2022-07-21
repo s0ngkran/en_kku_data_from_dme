@@ -23,7 +23,6 @@ class Point:
         else:
             self.x, self.y = x, y
 
-
 class PointMPH:
     def __init__(self, data=None, x=None, y=None):
         if x == None and y == None:
@@ -41,7 +40,6 @@ class PointMPH:
         dist = ((p.x - self.x)*w)**2 + ((p.y - self.y)*h)**2
         dist = dist**0.5
         return dist
-
 
 class MPHClassification:
     def __init__(self, handedness):
@@ -284,28 +282,21 @@ def evaluate():
         # if i >= 10: break
         # if iii != 28: continue
 
-
-
-
         # gt = gt_list[2]
         path = gt.img_path
         img = cv2.imread(os.path.join('..', path))
         # pred = mph.pred(img=img, draw=False, raw=False, gt=gt)
         pred = mph.pred(img=img, draw=True, raw=False)
-        # pred.plot(img=img)
-        # plt.title(str(iii))
-        # plt.show()
-        # 1/0
+        pred.plot(img=img)
+        plt.title(str(i))
+
+        # reading
+        plt.show()
+        continue
 
         # To draw IOU, I need to get the image.
         # then, return the rotated rectangle.
 
-        # image with annotation is ok
-        img_with_annotation = pred[:,:,(2,1,0)]
-        root = './draw_iou/img_with_annotation/'
-        cv2.imwrite(str(root) + str(i) + '.jpg', img_with_annotation)
-        print('saved', i)
-        continue
 
         #######
         #######
